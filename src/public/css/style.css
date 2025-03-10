@@ -1,1 +1,30 @@
 @charset "utf8";
+/* Botões tabela principal */
+.button img{
+    margin: 50px 15px 25px 15px;
+    padding: 5px;
+    border: 1px solid #e8e8e8;
+    cursor: pointer;
+}
+/* botao reset*/
+#btnReset {
+    width: 48px;
+    height: 48px;
+    background-image: url(../img/vassoura.png);
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+}
+/* RODAPÉ */
+footer {
+    width: 100%;
+    height: 50px;
+    text-align: center;
+    background-color: #b6c4cb;
+    position: fixed;
+    bottom: 0;
+}
+footer p{
+    color: black;
+    padding-top: 7px;
+}
