@@ -61,22 +61,22 @@ function aboutWindows(){
 //----------------- Fim janela Sobre-----------------------------------------------
 
 // ----------------------- Janela cliente --------------------------------------------
-let client 
-function clientWindow(){
-  nativeTheme.themeSource = 'light'
-  const main  = BrowserWindow.getFocusedWindow()
-  if (main){
-    client = new BrowserWindow({
-      width:1010,
-      height: 720,
-      autoHideMenuBar: true,
-      resizable: false,
-      parent: main,
-      modal:true
-    })
-  }
-  client.loadFile('./src/views/cliente.html')
-  client.center()
+let client
+function clientWindow() {
+    nativeTheme.themeSource = 'light'
+    const main = BrowserWindow.getFocusedWindow()
+    if(main) {
+        client = new BrowserWindow({
+            width: 1010,
+            height: 680,
+            autoHideMenuBar: true,
+            resizable: false,
+            parent: main,
+            modal: true
+        })
+    }
+    client.loadFile('./src/views/cliente.html') 
+    client.center() //iniciar no centro da tela   
 }
 // ----------------------- Fim Janela cliente --------------------------------------------
 // ----------------------- Janela OS --------------------------------------------
