@@ -1,19 +1,28 @@
-/**
- * Processo de renderização
- * Tela principal
- */
+// processo de renderização
+//tela principal
+
 console.log("Processo de renderização")
 
-function cliente(){
-    //console.log("Teste do botão cliente")
-    // uso do api autorizada no preload.js
+// Envio de uma mensagem para o main abrir a janela clinte
+function client() {
+    //console.log("teste do botão cliente")
+    //uso da api(autorizada no preload.js)
     api.clientWindow()
 }
 
-
-function os(){
-    //console.log("Teste do botão os")
-    api.ordemWindow()
+// Envio de uma mensagem para o main abrir a janela os
+function os() {
+    //console.log("teste do botão os")
+    //uso da api(autorizada no preload.js)
+    api.osWindow()
 }
-
-
+// Troca do ícone do banco de dados (Usando a api do preload.js)
+api.dbStatus((evente, message)=>{
+    // Teste do recebimento da mensagem do main
+    console.log(message)
+    if(message==="conectado"){
+        document.getElementById('statusdb').src="../public/img/dbon.png"
+    } else{
+        document.getElementById('statusdb').src="../public/img/dboff.png"        
+    }
+})
