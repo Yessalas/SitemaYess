@@ -5,7 +5,7 @@
 
 // importação dos recursos do framework mongoose
 const{model,Schema}= require('mongoose')
-// const { type } = require('os')
+const { type } = require('os')
 
 // criação da estrutura da coleção clientes
 const clienteSchema = new Schema({

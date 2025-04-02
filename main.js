@@ -1,6 +1,6 @@
 console.log("Processo principal")
 
-const { app, BrowserWindow, nativeTheme, Menu, ipcMain } = require('electron')
+const { app, BrowserWindow, nativeTheme, Menu, ipcMain, dialog, shell } = require('electron')
 
 // Esta linha está relacionada ao preload.js
 const path = require('node:path')
@@ -10,6 +10,11 @@ const { conectar, desconectar } = require('./database.js')
 
 // importação do schema clientes da camada model
 const clientModel = require ('./src/models/cliente.js')
+
+// importaçpão do pacote jspdf (npm i jspdf)
+const {jspdf, default: jsPDF}= require('jspdf')
+// importação da biblioteca fs (nativa do javascript)par manipulação de arquivos (no caso arquivos pdf)
+const fs = require ('fs')
 
 // Janela principal
 let win
@@ -162,7 +167,8 @@ const template = [
         label: 'Relatórios',
         submenu: [
             {
-                label: 'Clientes'
+                label: 'Clientes',
+                click: () => relatorioClientes()
             },
             {
                 label: 'OS abertas'
@@ -244,7 +250,107 @@ ipcMain.on('new-client', async (event, client) => {
             ufcCliente:client.ufClient
         })
         await newClient.save()
+        // mensagem de confirmação 
+        dialog.showMessageBox({
+            //customização
+            type: 'info',
+            title: "Aviso !",
+            message: "Cliente adicionado com sucesso",
+            buttons:['OK']
+        }).then((result)=>{
+            if(result.response === 0 ){
+                // enviar um pedido para o renderizador limpar os campos de resetar
+                // as configurações pré  definidas(rótulo 'reset - form)
+                event.reply('reset-form')
+            }
+        })
     } catch (error) {
+        //se o código de erro for 11000 (cpf duplicado) enviar
+        if (error.code === 11000){
+            dialog.showMessageBox({
+                type:'erro',
+                title:"Atenção!",
+                message:"CPF já está cadastrado \n Verifique se digitou corretamente",
+                buttons:['OK']
+            }).then((result)=> {
+                if(result.response === 0 ){
+                    //
+                }
+            })
+        }
         console.log(error)
     }
 })
+
+
+// RELATORIO DE CLIENTES
+async function relatorioClientes() {
+   try {
+        const clientes = await clientModel.find().sort({
+            nomeCliente:1
+        })
+        const doc = new jsPDF('p', 'mm', 'a4')
+
+        const imagePath = path.join(__dirname, 'src', 'public', 'img', 'logo.png')
+        const imageBase64 = fs.readFileSync(imagePath, { encoding: 'base64'})
+        doc.addImage(imageBase64, 'PNG', 5 ,8)  
+
+
+
+        doc.setFontSize(16)
+        doc.text("Relatório do cliente", 14,40)
+
+        const dataAtual = new Date().toLocaleDateString('pt-BR')
+        doc.setFontSize(12)
+        doc.text(`Data:${dataAtual}`, 160, 10)
+        let y = 60
+        doc.text("Nome",14, y)
+        doc.text("Telefone", 80, y)
+        doc.text("E-mail", 130, y)
+        y+= 5
+        doc.setLineWidth(0.5)
+        doc.line(10,y,200,y)
+        y += 10
+
+        clientes.forEach((c) =>{
+            if(y > 280){
+                doc.appPage()
+                y = 20;
+                doc.text("Nome",14, y)
+                doc.text("Telefone", 80, y)
+                doc.text("E-mail", 130, y)
+                y += 5
+                doc.setLineWidth(0.5)
+                doc.line(10,y,200,y)
+                y += 10
+
+
+            }
+            doc.text(c.nomeCliente, 14, y)
+            doc.text(c.foneCliente, 80, y)
+            doc.text(c.emailCliente ||"N/A", 130, y)
+
+            y+=10
+        })
+
+        const paginas = doc.internal.getNumberOfPages()
+        for (let i = 1 ; i <= paginas; i++){
+            doc.setPage(i)
+            doc.setFontSize(10)
+            doc.text(`Página ${i} de ${paginas}`, 105,290, {align: 'center' })
+        }
+
+        // doc.setLineWidth(0.5)
+        // doc.line(10,y,200,y)
+
+
+        const tempDir = app.getPath('temp')
+        const filePath = path.join(tempDir, 'client.pdf')
+        doc.save(filePath)
+        shell.openPath(filePath)
+        // teste de recebimento das listagens 
+        // console.log(clientes)
+   } catch (error) {
+    console.log(error)
+   } 
+}

@@ -73,3 +73,13 @@ frmClient.addEventListener('submit', async (event)=>{
     // enviar ao main o objeto client - passo 2 fluxo
     api.newClient(client)
 })
+/// =================== RESET FORM ==============================================================
+function resetForm(){
+    // limpar os campos e resetar o formulario com as configurações pré definidas
+    location.reload()
+}
+// recebimento  
+api.resetForm((args)=>{
+    resetForm()
+})
+/// =================================================================================
