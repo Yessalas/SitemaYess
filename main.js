@@ -254,27 +254,27 @@ ipcMain.on('new-client', async (event, client) => {
         dialog.showMessageBox({
             //customização
             type: 'info',
-            title: "Aviso !",
+            title: "Aviso",
             message: "Cliente adicionado com sucesso",
-            buttons:['OK']
-        }).then((result)=>{
-            if(result.response === 0 ){
-                // enviar um pedido para o renderizador limpar os campos de resetar
-                // as configurações pré  definidas(rótulo 'reset - form)
+            buttons: ['OK']
+        }).then((result) => {
+            //ação ao pressionar o botão (result = 0)
+            if (result.response === 0) {
+                //enviar um pedido para o renderizador limpar os campos e resetar as configurações pré definidas (rótulo 'reset-form' do preload.js
                 event.reply('reset-form')
             }
         })
     } catch (error) {
-        //se o código de erro for 11000 (cpf duplicado) enviar
-        if (error.code === 11000){
+        // se o código de erro for 11000 (cpf duplicado) enviar uma mensagem ao usuário
+        if (error.code === 11000) {
             dialog.showMessageBox({
-                type:'erro',
-                title:"Atenção!",
-                message:"CPF já está cadastrado \n Verifique se digitou corretamente",
-                buttons:['OK']
-            }).then((result)=> {
-                if(result.response === 0 ){
-                    //
+                type: 'error',
+                title: "Atenção!",
+                message: "CPF já está cadastrado\nVerifique se digitou corretamente",
+                buttons: ['OK']
+            }).then((result) => {
+                if (result.response === 0) {
+                    // limpar a caixa de input do cpf, focar esta caixa e deixar a borda em vermelho
                 }
             })
         }
@@ -354,3 +354,40 @@ async function relatorioClientes() {
     console.log(error)
    } 
 }
+
+
+
+
+
+ipcMain.on('search-name', async(event, name)=>{
+    try {
+        const dataClient = await clientModel.find({
+            nomeCliente: new RegExp(name,'i')
+        })
+        console.log(dataClient)
+        event.reply('render-client', JSON.stringify(dataClient))
+    } catch (error) {
+        console.log(error)        
+    }
+})
+
+ipcMain.on('search-CPF', async (event, CPF) => {
+    //console.log("teste IPC search-name")
+    //console.log(name) // teste do passo 2 (importante!)
+    // Passos 3 e 4 busca dos dados do cliente no banco
+    //find({nomeCliente: name}) - busca pelo nome
+    //RegExp(name, 'i') - i (insensitive / Ignorar maiúsculo ou minúsculo)
+    try {
+        const dataClient = await clientModel.find({
+            cpfCliente: new RegExp(CPF, 'i')
+        })
+        console.log(dataClient) // teste passos 3 e 4 (importante!)
+        // Passo 5:
+        // enviando os dados do cliente ao rendererCliente
+        // OBS: IPC só trabalha com string, então é necessário converter o JSON para string JSON.stringify(dataClient)
+        event.reply('render-client', JSON.stringify(dataClient))
+
+    } catch (error) {
+        console.log(error)
+    }
+})

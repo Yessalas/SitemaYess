@@ -21,6 +21,10 @@ function buscarCEP() {
         .catch(error => console.log(error))
 }
 
+
+let arrayClient =[]
+
+
 //capturar o foco na busca pelo nome do cliente
 // a constatnte foco obtem o elemento html(inpu) identificado como 'searchClient'
 const foco = document.getElementById('searchClient')
@@ -83,3 +87,63 @@ api.resetForm((args)=>{
     resetForm()
 })
 /// =================================================================================
+
+
+
+
+function validarCPF(){
+    let CPF =document.getElementById('searchClient').value
+    console.log(CPF)
+    api.searchCPF(CPF)
+
+    api.renderClient((event,dataClient)=>{
+        console.log(dataClient)
+
+        const dadosCliente = JSON.parse(dataClient)
+        arrayClient= dadosCliente
+        arrayClient.forEach((c) => {
+            nameClient.value = c.nomeCliente,
+            cpfClient.value = c.cpfCliente,
+            emailClient.value=c.emailCliente, 
+            phoneClient.value=c.foneCliente, 
+            cepClient.value=c.cepCliente, 
+            addressClient.value=c.logradouroCliente, 
+            numberClient.value=c.numeroCliente,  
+            complementClient.value=c.complementoCliente, 
+            neighborhoodClient.value=c.bairroCliente, 
+            cityClient.value=c.cidadeCliente, 
+            ufClient.value=c.ufcCliente
+        });
+    });
+
+}
+
+// let arrayClient =[]
+
+
+
+function buscarCliente(){
+    let name=document.getElementById('searchClient').value
+    console.log(name)
+    api.searchName(name)
+
+    api.renderClient((event,dataClient)=>{
+        console.log(dataClient)
+
+        const dadosCliente = JSON.parse(dataClient)
+        arrayClient= dadosCliente
+        arrayClient.forEach((c) => {
+            nameClient.value = c.nomeCliente,
+            cpfClient.value = c.cpfCliente,
+            emailClient.value=c.emailCliente, 
+            phoneClient.value=c.foneCliente, 
+            cepClient.value=c.cepCliente, 
+            addressClient.value=c.logradouroCliente, 
+            numberClient.value=c.numeroCliente,  
+            complementClient.value=c.complementoCliente, 
+            neighborhoodClient.value=c.bairroCliente, 
+            cityClient.value=c.cidadeCliente, 
+            ufClient.value=c.ufcCliente
+        });
+    });
+};
