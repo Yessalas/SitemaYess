@@ -356,38 +356,45 @@ async function relatorioClientes() {
 }
 
 
-
+ipcMain.on('validate-search', () =>{
+    dialog.showMessageBox({
+        type: 'warning',
+        title: "Atenção!!",
+        message: "Preencha o campo de busca",
+        buttons: ['OK']
+    })
+})
 
 
 ipcMain.on('search-name', async(event, name)=>{
     try {
         const dataClient = await clientModel.find({
-            nomeCliente: new RegExp(name,'i')
+            $or: [
+                {nomeCliente: new RegExp(name, 'i') },
+                {cpfCliente: new RegExp(name, 'i') }
+              ]
         })
         console.log(dataClient)
+        if(dataClient.length === 0){
+            dialog.showMessageBox({
+                type:'question',
+                title:"Aviso",
+                message:"Cliente não cadastrado. \nDeseja Cadastrar este cliente?",
+                desfaultId:0,
+                buttons:['Sim', 'Não']
+            }).then((result)=>{
+                if(result.response === 0){
+                    event.reply('set-client')
+                }else{
+                    event.reply('reset-form')
+                }
+            })
+        }else{
+
+        }
         event.reply('render-client', JSON.stringify(dataClient))
     } catch (error) {
         console.log(error)        
     }
 })
 
-ipcMain.on('search-CPF', async (event, CPF) => {
-    //console.log("teste IPC search-name")
-    //console.log(name) // teste do passo 2 (importante!)
-    // Passos 3 e 4 busca dos dados do cliente no banco
-    //find({nomeCliente: name}) - busca pelo nome
-    //RegExp(name, 'i') - i (insensitive / Ignorar maiúsculo ou minúsculo)
-    try {
-        const dataClient = await clientModel.find({
-            cpfCliente: new RegExp(CPF, 'i')
-        })
-        console.log(dataClient) // teste passos 3 e 4 (importante!)
-        // Passo 5:
-        // enviando os dados do cliente ao rendererCliente
-        // OBS: IPC só trabalha com string, então é necessário converter o JSON para string JSON.stringify(dataClient)
-        event.reply('render-client', JSON.stringify(dataClient))
-
-    } catch (error) {
-        console.log(error)
-    }
-})
