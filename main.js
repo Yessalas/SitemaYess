@@ -398,3 +398,23 @@ ipcMain.on('search-name', async(event, name)=>{
     }
 })
 
+
+ipcMain.on('delete-client',async(event,id)=>{
+    console.log(id)
+    try {
+        const {response }= await dialog.showMessageBox(client,{
+            type:'warning',
+            title:"Atenção",
+            message:"Deseja excluir este cliente? \n Esta ação não podera ser desfeita.",
+            buttons:['Cancelar', 'Excluir']
+        })
+        if (result.response === 1) {
+            const  delClient = await clientModel.findByIdAndDelete(id)
+            event.reply('reset-form')
+        } else {
+            
+        }
+    } catch (error) {
+        console.log(error)
+    }
+})

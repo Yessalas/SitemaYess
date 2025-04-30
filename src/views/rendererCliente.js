@@ -53,7 +53,8 @@ let complementClient=document.getElementById('inputComplementClient')
 let neighborhoodClient=document.getElementById('inputNeighborhoodClient')
 let cityClient=document.getElementById('inputCityClient')
 let ufClient=document.getElementById('inputUFClient')
-
+// captura do id do cliente(usado no delete e update)
+let id = document.getElementById('idClient')
 //
 
 function teclaEnter(event){
@@ -78,22 +79,30 @@ frmClient.addEventListener('submit', async (event)=>{
     console.log(nameClient.value, cpfClient.value, emailClient.value, phoneClient.value, 
         cepClient.value, addressClient.value, numberClient.value, numberClient.value, 
         complementClient.value, neighborhoodClient.value, cityClient.value, ufClient.value)
-    // criar um objeto para armazenar os dados do cliente antes de enviar ao main
-    const client = {
-        nameClient : nameClient.value,
-        cpfClient: cpfClient.value,
-        emailClient: emailClient.value,
-        phoneClient: phoneClient.value, 
-        cepClient:cepClient.value, 
-        addressClient: addressClient.value, 
-        numberClient:numberClient.value, 
-        complementClient:complementClient.value,
-        neighborhoodClient: neighborhoodClient.value, 
-        cityClient: cityClient.value,
-        ufClient:ufClient.value
+
+    // estrategia para reutilizar o submit para criar um novo usuario ou alterar  os dados de um usuario
+    if (id.value === ""){
+        const client = {
+            nameClient : nameClient.value,
+            cpfClient: cpfClient.value,
+            emailClient: emailClient.value,
+            phoneClient: phoneClient.value, 
+            cepClient:cepClient.value, 
+            addressClient: addressClient.value, 
+            numberClient:numberClient.value, 
+            complementClient:complementClient.value,
+            neighborhoodClient: neighborhoodClient.value, 
+            cityClient: cityClient.value,
+            ufClient:ufClient.value
+        }
+        // enviar ao main o objeto client - passo 2 fluxo
+        api.newClient(client)
+    }else{
+        
     }
-    // enviar ao main o objeto client - passo 2 fluxo
-    api.newClient(client)
+
+    // criar um objeto para armazenar os dados do cliente antes de enviar ao main
+    
 })
 /// =================== RESET FORM ==============================================================
 function resetForm(){
@@ -131,6 +140,7 @@ function buscarCliente(){
         const dadosCliente = JSON.parse(dataClient)
         arrayClient= dadosCliente
         arrayClient.forEach((c) => {
+            id.value=c._id,
             nameClient.value = c.nomeCliente,
             cpfClient.value = c.cpfCliente,
             emailClient.value=c.emailCliente, 
@@ -159,3 +169,9 @@ api.setClient((args)=>{
     foco.value =""
     nameClient.value = campoBusca
 })
+
+
+function excluirCliente(){
+    console.log(id.value)
+    api.deleteClient(id)
+}

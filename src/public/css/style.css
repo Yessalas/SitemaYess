@@ -45,4 +45,7 @@ footer p {
     font-size: 1.2em;
 }
 
-
+/* oculta o campo id do cliente */
+#idClient{
+    display: none;
+}
