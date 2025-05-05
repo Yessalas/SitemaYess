@@ -15,6 +15,7 @@ const clientModel = require ('./src/models/cliente.js')
 const {jspdf, default: jsPDF}= require('jspdf')
 // importação da biblioteca fs (nativa do javascript)par manipulação de arquivos (no caso arquivos pdf)
 const fs = require ('fs')
+const cliente = require('./src/models/cliente.js')
 
 // Janela principal
 let win
@@ -399,21 +400,69 @@ ipcMain.on('search-name', async(event, name)=>{
 })
 
 
-ipcMain.on('delete-client',async(event,id)=>{
-    console.log(id)
+/// crud deletee ////////////////////
+ipcMain.on('delete-client', async (event, id) => {
+    console.log(id) // teste do passo 2 (recebimento do id)
     try {
-        const {response }= await dialog.showMessageBox(client,{
-            type:'warning',
-            title:"Atenção",
-            message:"Deseja excluir este cliente? \n Esta ação não podera ser desfeita.",
-            buttons:['Cancelar', 'Excluir']
+        //importante - confirmar a exclusão
+        //client é o nome da variável que representa a janela
+        const { response } = await dialog.showMessageBox(client, {
+            type: 'warning',
+            title: "Atenção!",
+            message: "Deseja excluir este cliente?\nEsta ação não poderá ser desfeita.",
+            buttons: ['Cancelar','Excluir'] //[0, 1]
         })
-        if (result.response === 1) {
-            const  delClient = await clientModel.findByIdAndDelete(id)
+        if (response === 1) {
+            console.log("teste do if de excluir")
+            //Passo 3 - Excluir o registro do cliente
+            const delClient = await clientModel.findByIdAndDelete(id)
             event.reply('reset-form')
-        } else {
-            
         }
+    } catch (error) {
+        console.log(error)
+    }
+})
+
+
+// ---------------------------------------------------------
+
+ipcMain.on('update-client', async (event, client) => {
+    console.log(client) // Teste importante (recebimento dos dados do cliente)
+    try {
+        // criar uma nova de estrutura de dados usando a classe modelo. Atenção! Os atributos precisam ser idênticos ao modelo de dados Clientes.js e os valores são definidos pelo conteúdo do objeto cliente
+        const updateClient = await clientModel.findByIdAndUpdate(
+            client.idCli,
+            {
+                nomeCliente: client.nameCli,
+                cpfCliente: client.cpfCli,
+                emailCliente: client.emailCli,
+                foneCliente: client.foneCli,
+                cepCliente: client.cepCli,
+                logradouroCliente: client.addressCli,
+                numeroCliente: client.numberCli,
+                complementoCliente: client.complementCli,
+                bairroCliente: client.neighborhoodCli,
+                cidadeCliente: client.cityCli,
+                ufCliente: client.ufCli
+            },
+            {
+                new: true
+            }
+        )
+        // Mensagem de confirmação
+        dialog.showMessageBox({
+            //customização
+            type: 'info',
+            title: "Aviso",
+            message: "Dados do cliente alterados com sucesso",
+            buttons: ['OK']
+        }).then((result) => {
+            //ação ao pressionar o botão (result = 0)
+            if (result.response === 0) {
+                //enviar um pedido para o renderizador limpar os campos e resetar as configurações pré definidas (rótulo 'reset-form' do preload.js
+                event.reply('reset-form')
+            }
+        })
     } catch (error) {
         console.log(error)
     }
