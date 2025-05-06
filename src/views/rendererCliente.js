@@ -24,7 +24,9 @@ function buscarCEP() {
 
 // ============================================================
 // == Validar CPF =============================================
+function validarCPF() {
 
+}
 // == Fim - validar CPF =======================================
 // ============================================================
 
@@ -64,7 +66,7 @@ let numberClient = document.getElementById('inputNumberClient')
 let complementClient = document.getElementById('inputComplementClient')
 let neighborhoodClient = document.getElementById('inputNeighborhoodClient')
 let cityClient = document.getElementById('inputCityClient')
-let ufClient = document.getElementById('inputUFClient')
+let ufcClient = document.getElementById('inputUFClient')
 // captura do id do cliente (usado no delete e update)
 let id = document.getElementById('idClient')
 
@@ -101,9 +103,10 @@ frmClient.addEventListener('submit', async (event) => {
     //evitar o comportamento padrão do submit que é enviar os dados do formulário e reiniciar o documento html
     event.preventDefault()
     // Teste importante (recebimento dos dados do formuláro - passo 1 do fluxo)
-    console.log(nameClient.value, cpfClient.value, emailClient.value, phoneClient.value, cepClient.value, addressClient.value, numberClient.value, complementClient.value, neighborhoodClient.value, cityClient.value, ufClient.value)
+    console.log(nameClient.value, cpfClient.value, emailClient.value, phoneClient.value, cepClient.value, addressClient.value, numberClient.value, complementClient.value, neighborhoodClient.value, cityClient.value, ufcClient.value)
     //Criar um objeto para armazenar os dados do cliente antes de enviar ao main
     const client = {
+        idCli: id.value,
         nameCli: nameClient.value,
         cpfCli: cpfClient.value,
         emailCli: emailClient.value,
@@ -114,7 +117,7 @@ frmClient.addEventListener('submit', async (event) => {
         complementCli: complementClient.value,
         neighborhoodCli: neighborhoodClient.value,
         cityCli: cityClient.value,
-        ufCli: ufClient.value
+        ufcCli: ufcClient.value
     }
     // Enviar ao main o objeto client - (Passo 2: fluxo)
     // uso do preload.js
@@ -166,7 +169,7 @@ function buscarCliente() {
                     complementClient.value = c.complementoCliente,
                     neighborhoodClient.value = c.bairroCliente,
                     cityClient.value = c.cidadeCliente,
-                    ufClient.value = c.ufCliente
+                    ufcClient.value = c.ufcCliente
                 // desativar o botão adicionar
                 btnCreate.disabled = true
                 // ativar os botões editar e excluir
