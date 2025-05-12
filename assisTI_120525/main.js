@@ -8,8 +8,14 @@ const path = require('node:path')
 // Importação dos métodos conectar e desconectar (módulo de conexão)
 const { conectar, desconectar } = require('./database.js')
 
+// importar mongoose (validação do id na OS)
+const mongoose = require('mongoose')
+
 // Importação do Schema Clientes da camada model
 const clientModel = require('./src/models/Clientes.js')
+
+// Importação do Schema OS da camada model
+const osModel = require('./src/models/OS.js')
 
 // Importação do pacote jspdf (npm i jspdf)
 const { jspdf, default: jsPDF } = require('jspdf')
@@ -17,8 +23,7 @@ const { jspdf, default: jsPDF } = require('jspdf')
 // Importação da biblioteca fs (nativa do JavaScript) para manipulação de arquivos (no caso arquivos pdf)
 const fs = require('fs')
 
-// importação do recurso 'electron-prompt' (DIALOG DE INPUT)
-// 1 instalar o recurso: npm i electron-prompt
+// importação do pacote electron-prompt (dialog de input) - npm i electron-prompt
 const prompt = require('electron-prompt')
 
 // Janela principal
@@ -103,6 +108,7 @@ function osWindow() {
             resizable: false,
             parent: main,
             modal: true,
+            //ativação do preload.js
             webPreferences: {
                 preload: path.join(__dirname, 'preload.js')
             }
@@ -235,8 +241,16 @@ ipcMain.on('os-window', () => {
     osWindow()
 })
 
+
+
+//************************************************************/
+//***********************  Clientes  *************************/
+//************************************************************/
+
+
 // ============================================================
-// == Clientes - CRUD Create
+// == Clientes - CRUD Create ==================================
+
 // recebimento do objeto que contem os dados do cliente
 ipcMain.on('new-client', async (event, client) => {
     // Importante! Teste de recebimento dos dados do cliente
@@ -255,7 +269,7 @@ ipcMain.on('new-client', async (event, client) => {
             complementoCliente: client.complementCli,
             bairroCliente: client.neighborhoodCli,
             cidadeCliente: client.cityCli,
-            ufcCliente: client.ufcCli
+            ufCliente: client.ufCli
         })
         // salvar os dados do cliente no banco de dados
         await newClient.save()
@@ -291,7 +305,7 @@ ipcMain.on('new-client', async (event, client) => {
     }
 })
 
-// == Fim - Clientes - CRUD Create
+// == Fim - Clientes - CRUD Create ============================
 // ============================================================
 
 
@@ -302,37 +316,45 @@ async function relatorioClientes() {
     try {
         // Passo 1: Consultar o banco de dados e obter a listagem de clientes cadastrados por ordem alfabética
         const clientes = await clientModel.find().sort({ nomeCliente: 1 })
-
-        // Passo 2: Formatação do documento pdf
+        // teste de recebimento da listagem de clientes
+        //console.log(clientes)
+        // Passo 2:Formatação do documento pdf
+        // p - portrait | l - landscape | mm e a4 (folha A4 (210x297mm))
         const doc = new jsPDF('p', 'mm', 'a4')
-
         // Inserir imagem no documento pdf
+        // imagePath (caminho da imagem que será inserida no pdf)
+        // imageBase64 (uso da biblioteca fs par ler o arquivo no formato png)
         const imagePath = path.join(__dirname, 'src', 'public', 'img', 'logo.png')
         const imageBase64 = fs.readFileSync(imagePath, { encoding: 'base64' })
-        doc.addImage(imageBase64, 'PNG', 5, 8)
-
+        doc.addImage(imageBase64, 'PNG', 5, 8) //(5mm, 8mm x,y)
+        // definir o tamanho da fonte (tamanho equivalente ao word)
         doc.setFontSize(18)
-        doc.text("Relatório de clientes", 14, 45)
-
+        // escrever um texto (título)
+        doc.text("Relatório de clientes", 14, 45)//x, y (mm)
+        // inserir a data atual no relatório
         const dataAtual = new Date().toLocaleDateString('pt-BR')
         doc.setFontSize(12)
         doc.text(`Data: ${dataAtual}`, 165, 10)
-
+        // variável de apoio na formatação
         let y = 60
         doc.text("Nome", 14, y)
         doc.text("Telefone", 80, y)
         doc.text("E-mail", 130, y)
         y += 5
+        // desenhar uma linha
+        doc.setLineWidth(0.5) // expessura da linha
+        doc.line(10, y, 200, y) // 10 (inicio) ---- 200 (fim)
 
-        doc.setLineWidth(0.5)
-        doc.line(10, y, 200, y)
-
-        y += 10
-
+        // renderizar os clientes cadastrados no banco
+        y += 10 // espaçamento da linha
+        // percorrer o vetor clientes(obtido do banco) usando o laço forEach (equivale ao laço for)
         clientes.forEach((c) => {
+            // adicionar outra página se a folha inteira for preenchida (estratégia é saber o tamnaho da folha)
+            // folha A4 y = 297mm
             if (y > 280) {
                 doc.addPage()
-                y = 20
+                y = 20 // resetar a variável y
+                // redesenhar o cabeçalho
                 doc.text("Nome", 14, y)
                 doc.text("Telefone", 80, y)
                 doc.text("E-mail", 130, y)
@@ -341,13 +363,13 @@ async function relatorioClientes() {
                 doc.line(10, y, 200, y)
                 y += 10
             }
-
-            doc.text(String(c.nomeCliente || "N/A"), 14, y)
-            doc.text(String(c.foneCliente || "N/A"), 80, y)
-            doc.text(String(c.emailCliente || "N/A"), 130, y)
-            y += 10
+            doc.text(c.nomeCliente, 14, y),
+                doc.text(c.foneCliente, 80, y),
+                doc.text(c.emailCliente || "N/A", 130, y)
+            y += 10 //quebra de linha
         })
 
+        // Adicionar numeração automática de páginas
         const paginas = doc.internal.getNumberOfPages()
         for (let i = 1; i <= paginas; i++) {
             doc.setPage(i)
@@ -355,15 +377,17 @@ async function relatorioClientes() {
             doc.text(`Página ${i} de ${paginas}`, 105, 290, { align: 'center' })
         }
 
+        // Definir o caminho do arquivo temporário e nome do arquivo
         const tempDir = app.getPath('temp')
         const filePath = path.join(tempDir, 'clientes.pdf')
+        // salvar temporariamente o arquivo
         doc.save(filePath)
+        // abrir o arquivo no aplicativo padrão de leitura de pdf do computador do usuário
         shell.openPath(filePath)
     } catch (error) {
         console.log(error)
     }
 }
-
 
 // == Fim - relatório de clientes =============================
 // ============================================================
@@ -441,7 +465,7 @@ ipcMain.on('delete-client', async (event, id) => {
             type: 'warning',
             title: "Atenção!",
             message: "Deseja excluir este cliente?\nEsta ação não poderá ser desfeita.",
-            buttons: ['Cancelar','Excluir'] //[0, 1]
+            buttons: ['Cancelar', 'Excluir'] //[0, 1]
         })
         if (response === 1) {
             console.log("teste do if de excluir")
@@ -455,7 +479,12 @@ ipcMain.on('delete-client', async (event, id) => {
 })
 
 // == Fim - CRUD Delete =======================================
-//===============================================
+// ============================================================
+
+
+// ============================================================
+// == CRUD Update =============================================
+
 ipcMain.on('update-client', async (event, client) => {
     console.log(client) //teste importante (recebimento dos dados do cliente)
     try {
@@ -473,7 +502,7 @@ ipcMain.on('update-client', async (event, client) => {
                 complementoCliente: client.complementCli,
                 bairroCliente: client.neighborhoodCli,
                 cidadeCliente: client.cityCli,
-                ufcCliente: client.ufcCli
+                ufCliente: client.ufCli
             },
             {
                 new: true
@@ -510,10 +539,86 @@ ipcMain.on('update-client', async (event, client) => {
 
 
 // ============================================================
-// == Buscar OS ===============================================
+// == Buscar cliente para vincular na OS ======================
 
-ipcMain.on('search-os', (event) => {
-    //console.log("teste: busca OS")
+ipcMain.on('search-clients', async (event) => {
+    try {
+        const clients = await clientModel.find().sort({ nomeCliente: 1 })
+        //console.log(clients)
+        event.reply('list-clients', JSON.stringify(clients))
+    } catch (error) {
+        console.log(error)
+    }
+})
+
+// == Fim - Buscar cliente para vincular na OS ================
+// ============================================================
+
+
+// ============================================================
+// == CRUD Create - Gerar OS ==================================
+
+// Validação de busca (preenchimento obrigatório Id Cliente-OS)
+ipcMain.on('validate-client', (event) => {
+    dialog.showMessageBox({
+        type: 'warning',
+        title: "Aviso!",
+        message: "É obrigatório vincular o cliente na Ordem de Serviço",
+        buttons: ['OK']
+    }).then((result) => {
+        //ação ao pressionar o botão (result = 0)
+        if (result.response === 0) {
+            event.reply('set-search')
+        }
+    })
+})
+
+ipcMain.on('new-os', async (event, os) => {
+    //importante! teste de recebimento dos dados da os (passo 2)
+    console.log(os)
+    // Cadastrar a estrutura de dados no banco de dados MongoDB
+    try {
+        // criar uma nova de estrutura de dados usando a classe modelo. Atenção! Os atributos precisam ser idênticos ao modelo de dados OS.js e os valores são definidos pelo conteúdo do objeto os
+        const newOS = new osModel({
+            idCliente: os.idClient_OS,
+            statusOS: os.stat_OS,
+            computador: os.computer_OS,
+            serie: os.serial_OS,
+            problema: os.problem_OS,
+            tecnico: os.specialist_OS,
+            diagnostico: os.diagnosis_OS,
+            pecas: os.parts_OS,
+            valor: os.total_OS
+        })
+        // salvar os dados da OS no banco de dados
+        await newOS.save()
+        // Mensagem de confirmação
+        dialog.showMessageBox({
+            //customização
+            type: 'info',
+            title: "Aviso",
+            message: "OS gerada com sucesso",
+            buttons: ['OK']
+        }).then((result) => {
+            //ação ao pressionar o botão (result = 0)
+            if (result.response === 0) {
+                //enviar um pedido para o renderizador limpar os campos e resetar as configurações pré definidas (rótulo 'reset-form' do preload.js
+                event.reply('reset-form')
+            }
+        })
+    } catch (error) {
+        console.log(error)
+    }
+})
+
+// == Fim - CRUD Create - Gerar OS ===========================
+// ============================================================
+
+
+// ============================================================
+// == Buscar OS - CRUD Read ===================================
+
+ipcMain.on('search-os', async (event) => {
     prompt({
         title: 'Buscar OS',
         label: 'Digite o número da OS:',
@@ -523,34 +628,40 @@ ipcMain.on('search-os', (event) => {
         type: 'input',
         width: 400,
         height: 200
-    }).then((result) => {
+    }).then(async (result) => {
+        // buscar OS pelo id (verificar formato usando o mongoose - importar no início do main)
         if (result !== null) {
-            console.log(result)
-            //buscar a os no banco pesquisando pelo valor do result (número da OS)
-
+            // Verificar se o ID é válido (uso do mongoose - não esquecer de importar)
+            if (mongoose.Types.ObjectId.isValid(result)) {
+                try {
+                    const dataOS = await osModel.findById(result)
+                    if (dataOS) {
+                        console.log(dataOS) // teste importante
+                        // enviando os dados da OS ao rendererOS
+                        // OBS: IPC só trabalha com string, então é necessário converter o JSON para string JSON.stringify(dataOS)
+                        event.reply('render-os', JSON.stringify(dataOS))
+                    } else {
+                        dialog.showMessageBox({
+                            type: 'warning',
+                            title: "Aviso!",
+                            message: "OS não encontrada",
+                            buttons: ['OK']
+                        })
+                    }
+                } catch (error) {
+                    console.log(error)
+                }
+            } else {
+                dialog.showMessageBox({
+                    type: 'error',
+                    title: "Atenção!",
+                    message: "Formato do número da OS inválido.\nVerifique e tente novamente.",
+                    buttons: ['OK']
+                })
+            }
         }
     })
 })
 
-// == Fim - Buscar OS =========================================
-// ============================================================
-
-
-// ============================================================
-// == Buscar cliente para vincular na OS(busca estilo Google) = 
-
-ipcMain.on('search-clients', async (event) => {
-    try {
-        // buscar no banco os clientes pelo nome em ordem alfabética
-        const clients = await clientModel.find().sort({ nomeCliente: 1 })
-        //console.log(clients) // teste do passo 2
-        // Passo 3: Envio dos clientes para o renderizador
-        // Obs: não esquecer de converter para String
-        event.reply('list-clients', JSON.stringify(clients))
-    } catch (error) {
-        console.log(error)
-    }
-})
-
-// == Fim - Busca Cliente (estilo Google) =====================
+// == Fim - Buscar OS - CRUD Read =============================
 // ============================================================

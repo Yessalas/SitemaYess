@@ -22,7 +22,11 @@ contextBridge.exposeInMainWorld('api', {
     setClient: (args) => ipcRenderer.on('set-client', args),
     deleteClient: (id) => ipcRenderer.send('delete-client', id),
     updateClient: (client) => ipcRenderer.send('update-client', client),
+    searchClients: () => ipcRenderer.send('search-clients'),
+    listClients: (clients) => ipcRenderer.on('list-clients', clients),
     searchOS: () => ipcRenderer.send('search-os'),
-    searchClients: (clients) => ipcRenderer.send('search-clients', clients),
-    listClients: (clients) => ipcRenderer.on('list-clients', clients)
+    validateClient: () => ipcRenderer.send('validate-client'),
+    setSearch: (args) => ipcRenderer.on('set-search', args),
+    newOS: (os) => ipcRenderer.send('new-os', os),
+    renderOS: (dataOS) => ipcRenderer.on('render-os', dataOS)
 })
